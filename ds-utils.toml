@@ -1,0 +1,8 @@
+# Directories to check
+directories = [
+    "/home",
+]
+
+# Maximum allowed directory size (in bytes)
+# Everything larger than this size is going to get reported
+max_file_size = 75000000
