@@ -1,6 +1,8 @@
 use std::fs;
 use std::path::Path;
 
+use std::convert::TryInto;
+
 use crate::error;
 
 use error::Error::ConfigFileError;
@@ -9,6 +11,9 @@ use toml::Value;
 pub struct Config {
     pub directories: Vec<String>,
     pub max_file_size: u64,
+    pub file_tree: bool,
+    pub tree_length: u8,
+    pub tree_depth: u8,
 }
 
 impl Config {
@@ -30,16 +35,11 @@ impl Config {
 
         let config_file: String = fs::read_to_string(&file_path)?;
 
-        let (directories, max_file_size) = parse_toml(config_file)?;
-
-        Ok(Config {
-            directories,
-            max_file_size,
-        })
+        Ok(parse_toml_to_config(config_file)?)
     }
 }
 
-fn parse_toml(config_file: String) -> Result<(Vec<String>, u64), error::Error> {
+fn parse_toml_to_config(config_file: String) -> Result<Config, error::Error> {
     let parsed_toml: Value = toml::from_str(&config_file)?;
 
     let directories: Vec<String> = match parsed_toml.get("directories") {
@@ -71,5 +71,51 @@ fn parse_toml(config_file: String) -> Result<(Vec<String>, u64), error::Error> {
         }
     };
 
-    Ok((directories, max_file_size))
+    let file_tree: bool = match parsed_toml.get("file_tree") {
+        Some(value) => value.as_bool().unwrap(),
+        None => false,
+    };
+
+    let mut tree_length: u8 = 0;
+    let mut tree_depth: u8 = 0;
+
+    if file_tree {
+        tree_length = match parsed_toml.get("tree_length") {
+            Some(v) => match v.as_integer().unwrap().try_into() {
+                Ok(v) => v,
+                Err(_) => {
+                    eprintln!(
+                        "Warning: The value of subdirectory_report_count could not \
+                        be converted to an unsigned 8-bit integer. Defaulting to 3"
+                    );
+
+                    3
+                }
+            },
+            None => 0,
+        };
+
+        tree_depth = match parsed_toml.get("tree_depth") {
+            Some(v) => match v.as_integer().unwrap().try_into() {
+                Ok(v) => v,
+                Err(_) => {
+                    eprintln!(
+                        "Warning: The value of file_report_count could not \
+                        be converted to an unsigned 8-bit integer. Defaulting to 3"
+                    );
+
+                    3
+                }
+            },
+            None => 0,
+        };
+    }
+
+    Ok(Config {
+        directories,
+        max_file_size,
+        file_tree,
+        tree_length,
+        tree_depth,
+    })
 }

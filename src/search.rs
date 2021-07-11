@@ -2,8 +2,11 @@ use std::collections::HashMap;
 use std::fs;
 use std::os::linux::fs::MetadataExt;
 use std::path::Path;
+use std::path::PathBuf;
 
 use crate::{error, Config};
+
+use indexmap::IndexMap;
 
 pub fn search_target_directories(config: &Config) -> HashMap<&str, u64> {
     let mut error_stack: HashMap<&str, error::Error> = HashMap::new();
@@ -87,4 +90,32 @@ pub fn get_fs_entry_size(
     };
 
     Ok(size)
+}
+
+pub fn get_largest_sub_entries(
+    directory_path: &PathBuf,
+    amount: u8,
+) -> Result<IndexMap<PathBuf, u64>, error::Error> {
+    let subdirectories: fs::ReadDir = fs::read_dir(directory_path)?;
+    let mut inodes: Vec<u64> = Vec::new();
+    let mut sub_entries: IndexMap<PathBuf, u64> = IndexMap::new();
+
+    for subdirectory in subdirectories {
+        if let Ok(v) = subdirectory {
+            let path = v.path();
+            let size = get_fs_entry_size(Path::new(&path), &mut inodes)?;
+
+            sub_entries.insert(path, size);
+        } else {
+            break;
+        };
+    }
+
+    sub_entries.sort_by(|_ak, av, _bk, bv| bv.cmp(av));
+
+    if sub_entries.len() > amount.into() {
+        sub_entries.split_off(amount.into());
+    }
+
+    Ok(sub_entries)
 }

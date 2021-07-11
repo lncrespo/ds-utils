@@ -6,3 +6,12 @@ directories = [
 # Maximum allowed directory size (in bytes)
 # Everything larger than this size is going to get reported
 max_file_size = 75000000
+
+# Build a tree to illustrate the size of reported files
+file_tree = true
+
+# Maximum subentries per recursion level
+tree_length = 3
+
+# Maximum depth of the tree (recursion level)
+tree_depth = 3

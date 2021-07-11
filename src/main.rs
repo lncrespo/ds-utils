@@ -1,6 +1,7 @@
 mod config;
 mod error;
 mod search;
+mod tree;
 
 use std::{collections::HashMap, env, path::PathBuf};
 
@@ -45,10 +46,19 @@ fn main() {
 
     let directories_found: HashMap<&str, u64> = search::search_target_directories(&config);
 
-    for (directory, directory_size) in directories_found {
+    for (directory, directory_size) in &directories_found {
         println!(
-            "{} exceeds the max size (size: {}, maximum allowed size: {})",
+            "{} exceeds the max size (size: {} bytes, maximum allowed size: {} bytes)",
             directory, directory_size, &config.max_file_size
         );
+    }
+
+    if config.file_tree {
+        tree::print_tree(&config, &directories_found).unwrap_or_else(|err| {
+            eprintln!(
+                "There was an unexpected error while displaying the tree: {}",
+                err
+            );
+        });
     }
 }
