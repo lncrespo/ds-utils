@@ -11,6 +11,7 @@ use toml::Value;
 pub struct Config {
     pub directories: Vec<String>,
     pub max_file_size: u64,
+    pub human_readable: bool,
     pub file_tree: bool,
     pub tree_length: u8,
     pub tree_depth: u8,
@@ -71,8 +72,13 @@ fn parse_toml_to_config(config_file: String) -> Result<Config, error::Error> {
         }
     };
 
+    let human_readable: bool = match parsed_toml.get("human_readable") {
+        Some(value) => value.as_bool().expect("Invalid option value passed to \"human_readable\""),
+        None => false,
+    };
+
     let file_tree: bool = match parsed_toml.get("file_tree") {
-        Some(value) => value.as_bool().unwrap(),
+        Some(value) => value.as_bool().expect("Invalid option value passed to \"file_tree\""),
         None => false,
     };
 
@@ -114,6 +120,7 @@ fn parse_toml_to_config(config_file: String) -> Result<Config, error::Error> {
     Ok(Config {
         directories,
         max_file_size,
+        human_readable,
         file_tree,
         tree_length,
         tree_depth,

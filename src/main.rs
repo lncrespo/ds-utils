@@ -7,6 +7,8 @@ use std::{collections::HashMap, env, path::PathBuf};
 
 use config::Config;
 
+use humansize::*;
+
 fn main() {
     let mut arguments: env::Args = env::args();
     arguments.next();
@@ -46,11 +48,25 @@ fn main() {
 
     let directories_found: HashMap<&str, u64> = search::search_target_directories(&config);
 
-    for (directory, directory_size) in &directories_found {
-        println!(
-            "{} exceeds the max size (size: {} bytes, maximum allowed size: {} bytes)",
-            directory, directory_size, &config.max_file_size
-        );
+    if config.human_readable {
+        for (directory, directory_size) in &directories_found {
+            println!(
+                "{} exceeds the max size (size: {}, maximum allowed size: {})",
+                directory,
+                directory_size.file_size(file_size_opts::BINARY).unwrap(),
+                &config
+                    .max_file_size
+                    .file_size(file_size_opts::BINARY)
+                    .unwrap()
+            );
+        }
+    } else {
+        for (directory, directory_size) in &directories_found {
+            println!(
+                "{} exceeds the max size (size: {} bytes, maximum allowed size: {} bytes)",
+                directory, directory_size, &config.max_file_size
+            );
+        }
     }
 
     if config.file_tree {

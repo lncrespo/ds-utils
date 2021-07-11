@@ -1,7 +1,10 @@
 # Directories to check
 directories = [
-    "/home",
+    "/home/lucas/packages",
 ]
+
+# Display units as human readable
+human_readable = true
 
 # Maximum allowed directory size (in bytes)
 # Everything larger than this size is going to get reported

@@ -19,6 +19,7 @@ To use a different configuration file, simply pass in the path to the configurat
 
 Possible entries:
 - `directories` - Array: Used to hold every directory you want to check
+- `human_readable` - Boolean: Whether to display units as human readable (if false, sizes will be displayed in bytes)
 - `max_file_size` - Unsigned Integer (64-Bit): Every directory with an equal or larger size (in bytes) will get reported (defaults to 75MB)
 - `file_tree` - Boolean: Whether to print a file space tree
 - `tree_length` - Unsigned Integer (8-Bit): How many sub entries per reported directory are shown in the file tree

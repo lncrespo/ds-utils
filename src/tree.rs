@@ -8,18 +8,25 @@ use crate::search;
 
 use search::get_largest_sub_entries;
 
+use humansize::*;
+
 static TREE_ENTRY_SIGN: &str = "├─";
 static INDENTATION_UNIT: &str = "    ";
 
 pub fn print_tree(config: &Config, directories: &HashMap<&str, u64>) -> Result<(), error::Error> {
     for (path, size) in directories {
-        println!("\n{} - {}\n░░░░░░░░░░░░░░░░", path, size);
+        if config.human_readable {
+            println!("\n{} - {}\n░░░░░░░░░░░░░░░░", path, size.file_size(file_size_opts::BINARY).unwrap());
+        } else {
+            println!("\n{} - {}\n░░░░░░░░░░░░░░░░", path, size);
+        }
 
         walk_entries(
             &PathBuf::from(path),
             config.tree_length,
             0,
             config.tree_depth,
+            config.human_readable,
         )?;
     }
 
@@ -31,6 +38,7 @@ fn walk_entries(
     max_length: u8,
     current_depth: u8,
     max_depth: u8,
+    human_readable: bool,
 ) -> Result<(), error::Error> {
     if current_depth >= max_depth && max_depth != 0 {
         return Ok(());
@@ -40,12 +48,12 @@ fn walk_entries(
         let entries = get_largest_sub_entries(directory, max_length)?;
 
         for (path, size) in entries {
-            display_tree_node(&path, size, current_depth);
+            display_tree_node(&path, size, current_depth, human_readable);
 
             if path.is_dir() {
                 let current_depth = current_depth + 1;
 
-                walk_entries(&path, max_length, current_depth, max_depth)?;
+                walk_entries(&path, max_length, current_depth, max_depth, human_readable)?;
             }
         }
     }
@@ -53,14 +61,26 @@ fn walk_entries(
     Ok(())
 }
 
-fn display_tree_node(entry: &PathBuf, size: u64, depth: u8) {
+fn display_tree_node(entry: &PathBuf, size: u64, depth: u8, human_readable: bool) {
     let indentation: String = INDENTATION_UNIT.repeat(depth.into());
 
-    println!(
-        "{size: <15}░ {indentation}{tree_sign} {entry_name}",
-        size = size,
-        indentation = indentation,
-        tree_sign = TREE_ENTRY_SIGN,
-        entry_name = entry.display()
-    );
+    if human_readable {
+        let size = size.file_size(file_size_opts::BINARY).unwrap();
+
+        println!(
+            "{size: <15}░ {indentation}{tree_sign} {entry_name}",
+            size = size,
+            indentation = indentation,
+            tree_sign = TREE_ENTRY_SIGN,
+            entry_name = entry.display()
+        );
+    } else {
+        println!(
+            "{size: <15}░ {indentation}{tree_sign} {entry_name}",
+            size = size,
+            indentation = indentation,
+            tree_sign = TREE_ENTRY_SIGN,
+            entry_name = entry.display()
+        );
+    }
 }
